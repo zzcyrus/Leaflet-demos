@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Leaflet-Plugins</title>
+    <link rel="stylesheet" href="../lib/vue-material/vue-material.css">
+    <link rel="stylesheet" href="../lib/leaflet/leaflet.css">
+    <script src="../lib/leaflet/leaflet-src.js"></script>
+    <script src="../lib/vue/vue.js"></script>
+    <script src="../lib/vue-material/vue-material.debug.js"></script>
+    <!--wkt加载-->
+    <script src="../lib/plugins/leaflet-omnivore.min.js"></script>
+    <!--ImageWMS-->
+    <script src="../lib/plugins/NonTiledLayer.js"></script>
+    <style>
+        body {
+            padding: 0;
+            margin: 0;
+        }
+
+        html, body, #app, #map {
+            width: 100%;
+            height: 100%;
+        }
+
+        canvas {
+            max-width: none;
+        }
+
+        .toggle-base-map {
+            position: fixed;
+            z-index: 999;
+            right: 0;
+            top: 0;
+            width: 180px;
+            height: auto;
+            background: lightgrey;
+            padding: 0 20px;
+            border-radius: 5px;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+<div id="app">
+    <div id="map"></div>
+    <div class="toggle-base-map">
+        <md-radio v-for="item in mapRadios"
+                  v-model="index"
+                  :md-value="item.value"
+                  @change="changeLayer(item)">{{item.label}}
+        </md-radio>
+    </div>
+</div>
+
+<script>
+    Vue.use(VueMaterial)
+
+    new Vue({
+        el: '#app',
+        data: {
+            map: null,
+            index: null,
+            layer: null,
+            mapRadios: [
+                {
+                    label: '加载wkt数据源',
+                    value: '1',
+                    url: 'MULTIPOLYGON (((40 40, 20 45, 45 30, 40 40)), ((20 35, 10 30, 10 10, 30 5, 45 20, 20 35), (30 20, 20 15, 20 25, 30 20)))'
+                }, {
+                    label: 'ImageWMS图层',
+                    value: '2',
+                    url: 'https://api-test.cloud.ptvgroup.com/WMS/WMS?xtok=EF2560A3-9895-4373-BF8F-49CD967C1A1A'
+                }, {
+                    label: 'TileWMS图层',
+                    value: '3',
+                    url: 'https://api-test.cloud.ptvgroup.com/WMS/WMS?xtok=EF2560A3-9895-4373-BF8F-49CD967C1A1A'
+                }
+            ]
+        },
+        methods: {
+            initMap() {
+                this.map = L.map('map', {
+                    attributionControl: false
+                }).setView([39.91579, 116.39088], 5)
+                L.tileLayer('http://mt3.google.cn/vt/lyrs=s&hl=zh-CN&gl=cn&x={x}&y={y}&z={z}', {
+                    maxZoom: 18
+                }).addTo(this.map)
+                this.changeLayer(this.mapRadios[0])
+            },
+
+            changeLayer(item) {
+                this.index = item.value
+                if (this.layer) this.map.removeLayer(this.layer)
+                this.layer = null
+                if (item.value === '1') {
+                    /*定义样式*/
+                    let customLayer = L.geoJson(null, {
+                        style: function () {
+                            return {color: "#0ff"};
+                        }
+                    });
+                    this.layer = omnivore.wkt.parse(item.url, null, customLayer).addTo(this.map);
+                    this.map.setView([10, 20], 3);
+                } else if (item.value === '2') {
+                    this.layer = L.nonTiledLayer.wms(item.url, {
+                        maxZoom: 19,
+                        minZoom: 0,
+                        opacity: 1.0,
+                        layers: 'xmap-gravelpit-fg',
+                        format: 'image/png',
+                        transparent: true,
+                        pane: 'tilePane',
+                        zIndex: 9
+                    }).addTo(this.map);
+                    this.map.setView(L.latLng(49.01, 8.4), 16.5);
+                } else if (item.value === '3') {
+                    this.layer = L.tileLayer.wms(item.url, {
+                        maxZoom: 19,
+                        minZoom: 0,
+                        opacity: 1.0,
+                        layers: 'xmap-gravelpit-fg',
+                        format: 'image/png',
+                        transparent: true
+                    }).addTo(this.map);
+                    this.map.setView(L.latLng(49.01, 8.4), 16.5);
+                }
+            },
+
+        },
+        mounted() {
+            this.$nextTick(() => {
+                this.initMap()
+            });
+        },
+
+    })
+
+</script>
+
+</body>
+</html>
