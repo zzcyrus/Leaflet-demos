@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Leaflet-BaseMap</title>
+    <link rel="stylesheet" href="../lib/leaflet/leaflet.css">
+    <link rel="stylesheet" href="../lib/vue-material/vue-material.css">
+    <script src="../lib/leaflet/leaflet-src.js"></script>
+    <script src="../lib/vue/vue.js"></script>
+    <script src="../lib/vue-material/vue-material.debug.js"></script>
+
+    <style>
+        body, #app, #map {
+            width: 100%;
+            height: 100%;
+        }
+
+        .toggle-base-map {
+            position: fixed;
+            z-index: 999;
+            right: 0;
+            top: 0;
+            width: 150px;
+            height: auto;
+            background: lightgrey;
+            padding: 0 20px;
+            border-radius: 5px;
+            opacity: 0.8;
+        }
+
+    </style>
+
+</head>
+<body>
+<div id="app">
+    <div id="map"></div>
+    <div class="toggle-base-map">
+        <md-radio v-for="item in mapRadios"
+                  v-model="baseMap"
+                  :md-value="item.value"
+                  @change="changeBaseMap(item)">{{item.label}}
+        </md-radio>
+    </div>
+</div>
+
+<script>
+    Vue.use(VueMaterial)
+
+    new Vue({
+        el: '#app',
+        data: {
+            map: null,
+            baseMap: null,
+            baseLayer: null,
+            mapRadios: [
+                {
+                    label: '高德地图',
+                    value: '1',
+                    url: 'http://webrd01.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}'
+                }, {
+                    label: 'Esri地图',
+                    value: '2',
+                    url: 'http://map.geoq.cn/ArcGIS/rest/services/ChinaOnlineCommunity/MapServer/tile/{z}/{y}/{x}'
+                }, {
+                    label: '天地图道路',
+                    value: '3',
+                    url: 'http://t0.tianditu.cn/DataServer?T=vec_w&X={x}&Y={y}&L={z}'
+                }, {
+                    label: '天地图标注',
+                    value: '4',
+                    url: 'http://t5.tianditu.cn/DataServer?T=cva_w&X={x}&Y={y}&L={z}'
+                }, {
+                    label: '天地图影像',
+                    value: '5',
+                    url: 'http://t1.tianditu.cn/img_w/wmts?service=wmts&request=GetTile&version=1.0.0&LAYER=img&tileMatrixSet=w&TileMatrix={z}&TileRow={y}&TileCol={x}&style=default&format=tiles'
+                }, {
+                    label: '谷歌地形',
+                    value: '6',
+                    url: 'http://mt3.google.cn/vt/lyrs=t@131&hl=zh-CN&gl=cn&x={x}&y={y}&z={z}&s=Ga'
+                }, {
+                    label: '谷歌影像',
+                    value: '7',
+                    url: 'http://mt3.google.cn/vt/lyrs=s&hl=zh-CN&gl=cn&x={x}&y={y}&z={z}'
+                }, {
+                    label: '谷歌标注',
+                    value: '8',
+                    url: 'http://mt2.google.cn/vt/lyrs=m@167000000&hl=zh-CN&gl=cn&x={x}&y={y}&z={z}'
+                }
+            ]
+        },
+        methods: {
+            initMap() {
+                this.map = L.map('map', {
+                    attributionControl: false
+                }).setView([39.91579, 116.39088], 5)
+                this.changeBaseMap(this.mapRadios[0])
+            },
+
+            changeBaseMap(item) {
+                this.baseMap = item.value
+                if (this.baseLayer) this.map.removeLayer(this.baseLayer)
+                this.baseLayer = L.tileLayer(item.url, {
+                    maxZoom: 18
+                }).addTo(this.map)
+            }
+        },
+        mounted() {
+            this.$nextTick(() => {
+                this.initMap()
+            });
+        },
+
+    })
+
+
+    /**
+     * 谷歌全地址备注
+     */
+    /*   h skeleton map light  http://mt2.google.cn/vt/lyrs=h&hl=zh-CN&gl=cn&x=420&y=193&z=9
+         m 全地图   http://mt2.google.cn/vt/lyrs=m&hl=zh-CN&gl=cn&x=420&y=193&z=9
+         p terrain+map  http://mt2.google.cn/vt/lyrs=p&hl=zh-CN&gl=cn&x=420&y=193&z=9ript>
+         r skeleton map dark   http://mt2.google.cn/vt/lyrs=r&hl=zh-CN&gl=cn&x=420&y=193&z=9
+         y hybrid satellite map   http://mt1.google.cn/vt/lyrs=y&hl=zh-CN&gl=cn&x=420&y=193&z=9dy>
+         t 地形图   http://mt0.google.cn/vt/lyrs=t&hl=zh-CN&gl=cn&x=420&y=193&z=9ml>*/
+
+    /**
+     * openstreet
+     */
+    /*  瓦片地址格式：http://a.tile.openstreetmap.org/9/420/193.png
+        Cycle Map：http://c.tile.opencyclemap.org/cycle/9/420/193.png
+        Transport Map：http://b.tile2.opencyclemap.org/transport/9/420/193.png
+        MapQuest Map：http://otile3.mqcdn.com/tiles/1.0.0/osm/9/420/193.png*/
+
+
+</script>
+
+</body>
+</html>
